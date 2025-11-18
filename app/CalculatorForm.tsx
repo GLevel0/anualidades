@@ -105,14 +105,14 @@ export default function CalculatorForm() {
       tasa_por_periodo = calcular_i(tasa_por_periodo,tasa_nominal,frecuencia_de_capitalizacion)
       periodos = calcular_periodos(periodos,tiempo,frecuencia_de_capitalizacion)
 
-      resumen += `\n Valor Futuro/Monto Acumulado : ${renta*((Math.pow(1 + tasa_por_periodo, periodos) - 1) / tasa_por_periodo)}$`
+      resumen += `\n  Valor Futuro/Monto Acumulado : ${renta*((Math.pow(1 + tasa_por_periodo, periodos) - 1) / tasa_por_periodo)}$`
     }
     //Para este caso se necesita tener VA,j o i, m y t o n, y no debemos de conocer el VF
     if(valorActual != -1 && (tasa_nominal != -1 || tasa_por_periodo != -1) && ((frecuencia_de_capitalizacion != -1 && tiempo != -1) || periodos != -1)){
       tasa_por_periodo = calcular_i(tasa_por_periodo,tasa_nominal,frecuencia_de_capitalizacion)
       periodos = calcular_periodos(periodos,tiempo,frecuencia_de_capitalizacion)
 
-      resumen += `\n Renta desde el valor actual : ${(valorActual * tasa_por_periodo) / (1 - Math.pow(1 + tasa_por_periodo, -periodos))}$`
+      resumen += `\n  Renta desde el valor actual : ${(valorActual * tasa_por_periodo) / (1 - Math.pow(1 + tasa_por_periodo, -periodos))}$`
     }
 
     return resumen;
