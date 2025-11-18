@@ -61,6 +61,7 @@ export default function CalculatorForm() {
     
   }
 
+  //Metodo para calcular la tasa de interes desde la nominal.
   function calcular_i(tasa_por_periodo : number,tasa_nominal : number,frecuencia_de_capitalizacion : number){
     if(tasa_por_periodo == -1) {
       tasa_por_periodo = (tasa_nominal / frecuencia_de_capitalizacion) / 100
@@ -70,6 +71,7 @@ export default function CalculatorForm() {
     return tasa_por_periodo
   }
 
+  //Metodo para calcular la cantidad de periodos.
   function calcular_periodos(periodos : number,tiempo : number, frecuencia_de_capitalizacion : number){
     if(periodos == -1) {
       periodos = tiempo * frecuencia_de_capitalizacion
@@ -80,39 +82,37 @@ export default function CalculatorForm() {
   function computeResults(values: Values) {
     let resumen = `Resultados :`; //\n
 
+    //Valores de entrada.
     let valorActual = Number(values.valor_actual) || -1;
     let valorFuturo = Number(values.valor_futuro) || -1;
-
     let tasa_nominal = Number(values.tasa_nominal) || -1; // percent
     let tasa_por_periodo = Number(values.tasa_por_periodo) || -1; // percent
-
     let tiempo = Number(values.tiempo) || -1
     let frecuencia_de_capitalizacion = Number(values.frecuencia_de_capitalizacion) || -1
     let periodos = Number(values.periodos) || -1;
-    
     let renta = Number(values.renta) || -1;
 
-    //Para este caso se necesita tener VF,J o i, m y t o n, y no debemos tener una R conocida.
-    if ((valorFuturo != -1 && (tasa_nominal != -1 || tasa_por_periodo != -1) && ((frecuencia_de_capitalizacion != -1 && tiempo != -1) || periodos != -1))) 
-    {
+    //Comprobaciones.
+    const tenemos_tasa = ((tasa_nominal != -1 || frecuencia_de_capitalizacion != -1) || tasa_por_periodo != -1)
+    const tenemos_periodo = ((tiempo != -1 && frecuencia_de_capitalizacion != -1) || periodos != -1)
+    
+    //Estos evenntos necesitan tener la tasa y el periodo.
+    //Comprueba si se tiene/puede calcular el periodo y si se tiene/puede calcular la tasa.
+    if (tenemos_tasa && tenemos_periodo) {
       tasa_por_periodo = calcular_i(tasa_por_periodo,tasa_nominal,frecuencia_de_capitalizacion)
       periodos = calcular_periodos(periodos,tiempo,frecuencia_de_capitalizacion)
 
-      resumen += `\n  Renta desde el valor futuro : ${(valorFuturo * tasa_por_periodo) / (Math.pow(1 + tasa_por_periodo, periodos) - 1)}$`
-    }
-    //Para este caso se necesita tener R,j o i, m y t o n, y no debemos de conocer el VF
-    if((renta != -1 && (tasa_nominal != -1 || tasa_por_periodo != -1) && ((frecuencia_de_capitalizacion != -1 && tiempo != -1) || periodos != -1) )){
-      tasa_por_periodo = calcular_i(tasa_por_periodo,tasa_nominal,frecuencia_de_capitalizacion)
-      periodos = calcular_periodos(periodos,tiempo,frecuencia_de_capitalizacion)
+      if (valorFuturo != -1) {
+        resumen += `\n  Renta desde el valor futuro : ${(valorFuturo * tasa_por_periodo) / (Math.pow(1 + tasa_por_periodo, periodos) - 1)}$`
+      }
 
-      resumen += `\n  Valor Futuro/Monto Acumulado : ${renta*((Math.pow(1 + tasa_por_periodo, periodos) - 1) / tasa_por_periodo)}$`
-    }
-    //Para este caso se necesita tener VA,j o i, m y t o n, y no debemos de conocer el VF
-    if(valorActual != -1 && (tasa_nominal != -1 || tasa_por_periodo != -1) && ((frecuencia_de_capitalizacion != -1 && tiempo != -1) || periodos != -1)){
-      tasa_por_periodo = calcular_i(tasa_por_periodo,tasa_nominal,frecuencia_de_capitalizacion)
-      periodos = calcular_periodos(periodos,tiempo,frecuencia_de_capitalizacion)
+      if((renta != -1)){
+        resumen += `\n  Valor Futuro/Monto Acumulado : ${renta*((Math.pow(1 + tasa_por_periodo, periodos) - 1) / tasa_por_periodo)}$`
+      }
 
-      resumen += `\n  Renta desde el valor actual : ${(valorActual * tasa_por_periodo) / (1 - Math.pow(1 + tasa_por_periodo, -periodos))}$`
+      if(valorActual != -1){
+        resumen += `\n  Renta desde el valor actual : ${(valorActual * tasa_por_periodo) / (1 - Math.pow(1 + tasa_por_periodo, -periodos))}$`
+      }
     }
 
     return resumen;
