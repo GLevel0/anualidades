@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, ChangeEvent, FormEvent } from "react";
-import { } from "./AmortizationTable";
 
+//Tipo de las variables financieras, utilizado para el computo.
 type Values = {
   valor_actual: string;
   valor_futuro: string;
@@ -14,6 +14,7 @@ type Values = {
   renta: string;
 };
 
+//Tipo utilizado para las filas
 type Fila = {
   periodo: number;
   renta: number;
@@ -22,6 +23,7 @@ type Fila = {
   saldo: number;
 };
 
+//Componente base de la calculadora.
 export default function CalculatorForm() {
   const [inputs, setInputs] = useState<Values>({
     valor_actual: "",
@@ -53,20 +55,19 @@ export default function CalculatorForm() {
           setInputs((p) => ({ ...p, [id]: "" } as Values));
         }
         break;
-      case "tiempo" :
-        if (checking_value !== null && checking_value > 0) {
+        /*if (checking_value !== null && checking_value > 0) {
           setInputs((p) => ({ ...p, [id]: value } as Values));
         }
         else if(checking_value === null) {
           setInputs((p) => ({ ...p, [id]: value } as Values));
         }
-        break;
+        break;*/
       default :
         if (checking_value !== null && checking_value > 0) {
           setInputs((p) => ({ ...p, [id]: value } as Values));
         }
         else if(checking_value === null) {
-          setInputs((p) => ({ ...p, [id]: "" } as Values));
+          setInputs((p) => ({ ...p, [id]: value } as Values));
         }
         break;
         
@@ -126,7 +127,7 @@ export default function CalculatorForm() {
     let renta = Number(values.renta) || -1;
 
     //Comprobaciones.
-    const tenemos_tasa = ((tasa_nominal != -1 || frecuencia_de_capitalizacion != -1) || tasa_por_periodo != -1)
+    const tenemos_tasa = ((tasa_nominal != -1 && frecuencia_de_capitalizacion != -1) || tasa_por_periodo != -1)
     const tenemos_periodo = ((tiempo != -1 && frecuencia_de_capitalizacion != -1) || periodos != -1)
     
     //Estos evenntos necesitan tener la tasa y el periodo.
@@ -136,34 +137,39 @@ export default function CalculatorForm() {
       
       // Comprueba si se tiene/puede calcular el periodo
       if (tenemos_periodo) {
-        let operation
+        periodos = calcular_periodos(periodos,tiempo,frecuencia_de_capitalizacion)
         if (valorFuturo != -1) {
-          resumen += `\n  Renta desde el valor futuro : ${(valorFuturo * tasa_por_periodo) / (Math.pow(1 + tasa_por_periodo, periodos) - 1)}$`
+          let result = (valorFuturo * tasa_por_periodo) / (Math.pow(1 + tasa_por_periodo, periodos) - 1)
+          resumen += `\n  Renta desde el valor futuro : ${result}$`
         }
 
         if(valorActual != -1){
-          resumen += `\n  Renta desde el valor actual : ${(valorActual * tasa_por_periodo) / (1 - Math.pow(1 + tasa_por_periodo, -periodos))}$`
+          let result = (valorActual * tasa_por_periodo) / (1 - Math.pow(1 + tasa_por_periodo, -periodos))
+          if(has_to_generate) {
+            generarTabla(result,valorActual,tasa_por_periodo,periodos)
+          }
+          resumen += `\n  Renta desde el valor actual : ${result}$`
         }
 
         if((renta != -1)){
-          operation = renta * ((Math.pow(1 + tasa_por_periodo, periodos) - 1) / tasa_por_periodo)
+          let result = renta * ((Math.pow(1 + tasa_por_periodo, periodos) - 1) / tasa_por_periodo)
           if (is_Anticipada) {
-            resumen += `\n  Valor Futuro/Monto Acumulado : ${operation * (1+tasa_por_periodo)}$`
+            resumen += `\n  Valor Futuro/Monto Acumulado : ${result * (1+tasa_por_periodo)}$`
           }
           else
           {
-            resumen += `\n  Valor Futuro/Monto Acumulado : ${operation}$`
+            resumen += `\n  Valor Futuro/Monto Acumulado : ${result}$`
           }   
         }
 
         if((renta != -1)){
-          operation = renta * (1 - (Math.pow(1 + tasa_por_periodo, -periodos)) / tasa_por_periodo) 
+          let result = renta * ( (1 - (Math.pow(1 + tasa_por_periodo, -periodos))) / tasa_por_periodo) 
           if (is_Anticipada) {
-            resumen += `\n  Valor Presente/Capital inicial : ${operation * (1+tasa_por_periodo)}$`
+            resumen += `\n  Valor Presente/Capital inicial : ${result * (1+tasa_por_periodo)}$`
           }
           else
           {
-            resumen += `\n  Valor Presente/Capital inicial : ${operation}$`
+            resumen += `\n  Valor Presente/Capital inicial : ${result}$`
           }
         }
       }
@@ -179,6 +185,7 @@ export default function CalculatorForm() {
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setTabla([])
     const text = computeResults(inputs);
     setResultText(text);
   }
@@ -190,42 +197,42 @@ export default function CalculatorForm() {
         
         <div>
           <label htmlFor="valor_actual">Valor Actual</label>
-          <input id="valor_actual" autoComplete="off" type="number" placeholder="$" value={inputs.valor_actual} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
+          <input id="valor_actual" autoComplete="off" type="number" step="any" placeholder="$" value={inputs.valor_actual} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
         </div>
 
         <div>
           <label htmlFor="valor_futuro">Valor Futuro</label>
-          <input id="valor_futuro" autoComplete="off" type="number" placeholder="$" value={inputs.valor_futuro} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
+          <input id="valor_futuro" autoComplete="off" type="number" step="any" placeholder="$" value={inputs.valor_futuro} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
         </div>
 
         <div>
           <label htmlFor="tasa_nominal">Tasa nominal</label>
-          <input id="tasa_nominal" autoComplete="off" type="number" placeholder="%" value={inputs.tasa_nominal} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
+          <input id="tasa_nominal" autoComplete="off" type="number" step="any" placeholder="%" value={inputs.tasa_nominal} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
         </div>
 
         <div>
           <label htmlFor="tasa_por_periodo">Tasa por periodo de capitalizacion</label>
-          <input id="tasa_por_periodo" autoComplete="off" type="number" placeholder="%" value={inputs.tasa_por_periodo} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
+          <input id="tasa_por_periodo" autoComplete="off" type="number" step="any" placeholder="%" value={inputs.tasa_por_periodo} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
         </div>
 
         <div>
           <label htmlFor="frecuencia_de_capitalizacion">Frecuencia de capitalizacion</label>
-          <input id="frecuencia_de_capitalizacion" autoComplete="off" type="number" placeholder="m" value={inputs.frecuencia_de_capitalizacion} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
+          <input id="frecuencia_de_capitalizacion" autoComplete="off" type="number" step="any" placeholder="m" value={inputs.frecuencia_de_capitalizacion} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
         </div>
 
         <div>
           <label htmlFor="tiempo">Tiempo</label>
-          <input id="tiempo" autoComplete="off" type="number" placeholder="años" value={inputs.tiempo} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
+          <input id="tiempo" autoComplete="off" type="number" step="any" placeholder="años" value={inputs.tiempo} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
         </div>
 
         <div>
           <label htmlFor="periodos">Periodos de capitalizacion</label>
-          <input id="periodos" autoComplete="off" type="number" placeholder="n" value={inputs.periodos} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
+          <input id="periodos" autoComplete="off" type="number" step="any" placeholder="n" value={inputs.periodos} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
         </div>
 
         <div>
           <label htmlFor="renta">Renta</label>
-          <input id="renta" autoComplete="off" type="number" placeholder="$" value={inputs.renta} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
+          <input id="renta" autoComplete="off" type="number" step="any" placeholder="$" value={inputs.renta} onChange={handleChange} className="w-full px-4 py-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition" />
         </div>  
       </div>
 
@@ -242,7 +249,7 @@ export default function CalculatorForm() {
             <th className="p-2 border">Período</th>
             <th className="p-2 border">Renta</th>
             <th className="p-2 border">Interés</th>
-            <th className="p-2 border">Capital</th>
+            <th className="p-2 border">Amortización</th>
             <th className="p-2 border">Saldo</th>
             </tr>
         </thead>
