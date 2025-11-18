@@ -39,6 +39,14 @@ export default function CalculatorForm() {
           setInputs((p) => ({ ...p, [id]: "" } as Values));
         }
         break;
+      case "tiempo" :
+        if (checking_value !== null && checking_value > 0) {
+          setInputs((p) => ({ ...p, [id]: value } as Values));
+        }
+        else if(checking_value === null) {
+          setInputs((p) => ({ ...p, [id]: value } as Values));
+        }
+        break;
       default :
         if (checking_value !== null && checking_value > 0) {
           setInputs((p) => ({ ...p, [id]: value } as Values));
@@ -70,7 +78,7 @@ export default function CalculatorForm() {
   }
 
   function computeResults(values: Values) {
-    let resumen = ``; //\n
+    let resumen = `Resultados :`; //\n
 
     let valorActual = Number(values.valor_actual) || -1;
     let valorFuturo = Number(values.valor_futuro) || -1;
@@ -84,17 +92,27 @@ export default function CalculatorForm() {
     
     let renta = Number(values.renta) || -1;
 
-    //Para este caso se necesita tener VF,J o i, m y t o n, y no debemos tener una renta conocida.
-    if ((valorFuturo != -1 && (tasa_nominal != -1 || tasa_por_periodo != -1) && ((frecuencia_de_capitalizacion != -1 && tiempo != -1) || periodos != -1) ) && renta == -1) 
+    //Para este caso se necesita tener VF,J o i, m y t o n, y no debemos tener una R conocida.
+    if ((valorFuturo != -1 && (tasa_nominal != -1 || tasa_por_periodo != -1) && ((frecuencia_de_capitalizacion != -1 && tiempo != -1) || periodos != -1))) 
     {
       tasa_por_periodo = calcular_i(tasa_por_periodo,tasa_nominal,frecuencia_de_capitalizacion)
       periodos = calcular_periodos(periodos,tiempo,frecuencia_de_capitalizacion)
 
-      renta = (valorFuturo * tasa_por_periodo) / (Math.pow(1 + tasa_por_periodo, periodos) - 1)
-      resumen = `Resultado :\n  Renta : ${renta}$`
+      resumen += `\n  Renta desde el valor futuro : ${(valorFuturo * tasa_por_periodo) / (Math.pow(1 + tasa_por_periodo, periodos) - 1)}$`
     }
-    else if(renta != -1){
+    //Para este caso se necesita tener R,j o i, m y t o n, y no debemos de conocer el VF
+    if((renta != -1 && (tasa_nominal != -1 || tasa_por_periodo != -1) && ((frecuencia_de_capitalizacion != -1 && tiempo != -1) || periodos != -1) )){
       tasa_por_periodo = calcular_i(tasa_por_periodo,tasa_nominal,frecuencia_de_capitalizacion)
+      periodos = calcular_periodos(periodos,tiempo,frecuencia_de_capitalizacion)
+
+      resumen += `\n Valor Futuro/Monto Acumulado : ${renta*((Math.pow(1 + tasa_por_periodo, periodos) - 1) / tasa_por_periodo)}$`
+    }
+    //Para este caso se necesita tener VA,j o i, m y t o n, y no debemos de conocer el VF
+    if(valorActual != -1 && (tasa_nominal != -1 || tasa_por_periodo != -1) && ((frecuencia_de_capitalizacion != -1 && tiempo != -1) || periodos != -1)){
+      tasa_por_periodo = calcular_i(tasa_por_periodo,tasa_nominal,frecuencia_de_capitalizacion)
+      periodos = calcular_periodos(periodos,tiempo,frecuencia_de_capitalizacion)
+
+      resumen += `\n Renta desde el valor actual : ${(valorActual * tasa_por_periodo) / (1 - Math.pow(1 + tasa_por_periodo, -periodos))}$`
     }
 
     return resumen;
